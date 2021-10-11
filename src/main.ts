@@ -8,9 +8,11 @@ import { nasmCompileAndLinkMacOSX } from './tools';
   const code = await fs.readFile('./src/test.w', 'utf-8');
   const lexer = new Lexer(code);
   const parser = new Parser(lexer);
-  new Compiler(parser.getAST());
+  const compiler = new Compiler(parser.getAST());
+  await compiler.writeStreamEnd();
   await nasmCompileAndLinkMacOSX('test.S');
+  console.log('Job Done!');
 })()
 .catch((err) => {
-  console.log(err.message);
+  console.log(err);
 });

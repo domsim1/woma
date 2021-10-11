@@ -6,17 +6,33 @@ class Compiler {
   private currentSymbol: WomaSymbol;
   private pc: number;
   private writeStream: WriteStream;
+  private userWords: string;
+  private isDefiningWord: boolean;
 
   constructor(ast: WomaSymbol[]) {
     this.writeStream = createWriteStream('./test.S', 'utf-8');
     this.pc = 0;
     this.ast = ast;
+    this.userWords = '';
+    this.isDefiningWord = false;
     this.currentSymbol = this.ast[this.pc];
     this.writeHead();
     while (this.pc < this.ast.length) {
       this.compile();
     }
     this.writeTail();
+    this.writeStream.end();
+  }
+
+  public writeStreamEnd(): Promise<void> {
+    return new Promise((resolve) => {
+      if (this.writeStream.writableFinished) {
+        resolve();
+      }
+      this.writeStream.on('finish', () => {
+        resolve()
+      });
+    });
   }
 
   private genErrorMessage(issue: string): string {
@@ -34,10 +50,19 @@ class Compiler {
             if (a === undefined) {
               throw new Error(this.genErrorMessage('unable to find value for literal'));
             }
-            this.asm(`push ${a}`);
+            this.asm(`mov rax, ${a}`)
+            this.asm(`push rax`);
             break;
           }
         }
+        break;
+      }
+      case OpType.UserDefinedWord: {
+          this.asm(`mov rax, rtn_${this.pc}`);
+          this.asm(`pushrs rax`);
+          this.asm(`mov rax, def_${cs.value}`);
+          this.asm(`jmp rax`);
+          this.asma(`rtn_${this.pc}:`)
         break;
       }
       case OpType.Word: {
@@ -111,6 +136,11 @@ class Compiler {
             this.asm(`sub qword [rsp], rax`);
             break;
           }
+          case Op.Def: {
+            this.isDefiningWord = true;
+            this.asma(`def_${cs.value}:`)
+            break;
+          }
         }
         break;
       }
@@ -126,12 +156,13 @@ class Compiler {
             this.asm(`pushrs rbx`);
             this.asm(`pushrs rax`);
             this.asma(`tag_${this.pc}:`);
-            this.asm(`poprs rax`);
+            this.asm(`poprs rcx`);
             this.asm(`poprs rbx`);
-            this.asm(`cmp rax, rbx`);
-            this.asm(`je tag_${cs.value}`);
+            this.asm(`xor rax, rax`);
+            this.asm(`cmp rcx, rbx`);
+            this.asm(`jz tag_${cs.value}`);
             this.asm(`pushrs rbx`);
-            this.asm(`pushrs rax`);
+            this.asm(`pushrs rcx`);
             break;
           }
           case Op.If: {
@@ -151,7 +182,14 @@ class Compiler {
           case Op.Leave: {
             this.asm(`poprs rax`);
             this.asm(`poprs rax`);
-            this.asm(`jmp tag_${cs.value}`);
+            const ls = this.ast[Number(cs.value)];
+            this.asm(`jmp tag_${ls.value}`);
+            break;
+          }
+          case Op.Exit: {
+            this.asm(`poprs rax`);
+            this.asm(`jmp rax`);
+            this.isDefiningWord = false;
             break;
           }
         }
@@ -162,11 +200,20 @@ class Compiler {
   }
 
   private asm(x: string): void {
-    this.writeStream.write(`  ${x}\n`);
+    if (!this.isDefiningWord) {
+      this.writeStream.write(`  ${x}\n`);
+    } else {
+      this.userWords += `  ${x}\n`
+    }
   }
 
   private asma(x: string): void {
-    this.writeStream.write(`${x}\n`);
+    if (!this.isDefiningWord) {
+      this.writeStream.write(`${x}\n`);
+    } else {
+      this.userWords += `${x}\n`
+    }
+    
   }
 
   private writeHead(): void {
@@ -174,10 +221,10 @@ class Compiler {
     this.asm(`add rbp, 8`);
     this.asm(`mov [rbp], %1`);
     this.asma(`%endmacro`);
-    this.asm(`%macro poprs 1`);
+    this.asma(`%macro poprs 1`);
     this.asm(`mov %1, qword [rbp]`);
     this.asm(`sub rbp, 8`);
-    this.asm(`%endmacro`);
+    this.asma(`%endmacro`);
     this.asm(`global _main`);
     this.asm(`section .text`);
     this.asma(`_main:`);
@@ -185,12 +232,16 @@ class Compiler {
   }
 
   private writeTail(): void {
+    if (this.isDefiningWord) {
+      throw new Error(this.genErrorMessage('Expected ending of def.'));
+    }
     this.asm(`mov rax, 0x02000001`);
     this.asm(`mov rdi, 0`);
     this.asm(`syscall`);
+    this.writeStream.write(this.userWords);
     this.asm(`segment .bss`);
-    this.asma(`mem: resb 200000`)
-    this.asma(`return_stack_base: resq 256`)
+    this.asma(`mem: resb 200000`);
+    this.asma(`return_stack_base: resq 256`);
   }
 }
 
