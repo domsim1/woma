@@ -15,7 +15,9 @@ enum Op {
   I,
   DivMod,
   Less,
+  Grt,
   If,
+  Else,
   Dup,
   Leave,
   Sub,
@@ -26,6 +28,7 @@ enum Op {
   Exit,
   Type,
   Swap,
+  Neg,
 }
 
 enum OpType {
@@ -42,7 +45,6 @@ enum DataType {
   word,
   any,
   ptr,
-  bool,
 }
 
 interface WordType {
@@ -95,6 +97,17 @@ class WomaSymbol {
             output: [DataType.ptr],
           },
         ];
+        break;
+      }
+      case 'neg': {
+        this.op = Op.Neg;
+        this.opType = OpType.Word;
+        this.wordType = [
+          {
+            input: [DataType.int],
+            output: [DataType.int],
+          }
+        ]
         break;
       }
       case 'drop': {
@@ -210,7 +223,18 @@ class WomaSymbol {
         this.wordType = [
           {
             input: [DataType.int, DataType.int],
-            output: [DataType.bool],
+            output: [DataType.int],
+          }
+        ];
+        break;
+      }
+      case '>': {
+        this.op = Op.Grt;
+        this.opType = OpType.Word;
+        this.wordType = [
+          {
+            input: [DataType.int, DataType.int],
+            output: [DataType.int],
           }
         ];
         break;
@@ -220,7 +244,7 @@ class WomaSymbol {
         this.opType = OpType.Flow;
         this.wordType = [
           {
-            input: [DataType.bool],
+            input: [DataType.int],
             output: [],
           },
         ];
@@ -306,7 +330,7 @@ class WomaSymbol {
       case 'bool': {
         this.op = Op.Type;
         this.opType = OpType.Type;
-        this.dataType = DataType.bool;
+        this.dataType = DataType.int;
         break;
       }
       case '--': {
@@ -317,6 +341,17 @@ class WomaSymbol {
       case ')': {
         this.op = Op.TypeEnd;
         this.opType = OpType.Type;
+        break;
+      }
+      case 'else': {
+        this.op = Op.Else;
+        this.opType = OpType.Flow;
+        this.wordType = [
+          {
+            input: [],
+            output: [],
+          }
+        ]
         break;
       }
       case 'swap': {
@@ -330,10 +365,6 @@ class WomaSymbol {
           {
             input: [ DataType.ptr, DataType.ptr ],
             output: [ DataType.ptr, DataType.ptr ],
-          }, 
-          {
-            input: [ DataType.bool, DataType.bool ],
-            output: [ DataType.bool, DataType.bool ],
           },
           {
             input: [ DataType.int, DataType.ptr ],
@@ -343,22 +374,6 @@ class WomaSymbol {
             input: [ DataType.ptr, DataType.int ],
             output: [ DataType.int, DataType.ptr ],
           },
-          {
-            input: [ DataType.int, DataType.bool ],
-            output: [ DataType.bool, DataType.int ],
-          },
-          {
-            input: [ DataType.bool, DataType.int ],
-            output: [ DataType.int, DataType.bool ],
-          },
-          {
-            input: [ DataType.ptr, DataType.bool ],
-            output: [ DataType.bool, DataType.ptr ],
-          },
-          {
-            input: [ DataType.bool, DataType.ptr ],
-            output: [ DataType.ptr, DataType.bool ],
-          }
         ]
         break;
       }

@@ -95,6 +95,22 @@ class Compiler {
             this.asm(`push rbx`);
             break;
           }
+          case Op.Grt: {
+            this.asm(`pop rbx`);
+            this.asm(`pop rcx`);
+            this.asm(`xor rax, rax`)
+            this.asm(`cmp rcx, rbx`);
+            this.asm(`setg al`);
+            this.asm(`neg rax`);
+            this.asm(`push rax`);
+            break;
+          }
+          case Op.Neg: {
+            this.asm(`pop rax`);
+            this.asm(`neg rax`);
+            this.asm(`push rax`);
+            break;
+          }
           case Op.Store: {
             this.asm(`pop rax`);
             this.asm(`pop rbx`);
@@ -176,6 +192,10 @@ class Compiler {
             this.asm(`pop rax`);
             this.asm(`test rax, rax`);
             this.asm(`jz tag_${cs.value}`);
+            break;
+          }
+          case Op.Else: {
+            this.asma(`tag_${this.pc}:`);
             break;
           }
           case Op.End: {

@@ -16,21 +16,21 @@ class Parser {
   private rs: ReturnStackItem[];
   private pc: number;
   private ts: DataType[];
-  private tsSizeSnapshot: number[];
   private lexer: Lexer;
   private currentSymbol: WomaSymbol;
   private dictionary: Map<string, DictionaryItem>;
   private currentDefinitionToken?: string;
+  private tsSnapshots: DataType[][];
 
   constructor(lexer: Lexer) {
     this.ast = [];
     this.rs = [];
     this.pc = 0;
     this.ts = [];
-    this.tsSizeSnapshot = [];
     this.lexer = lexer;
     this.currentSymbol = this.lexer.nextSymbol();
     this.dictionary = new Map();
+    this.tsSnapshots = [];
     while (this.currentSymbol.op !== Op.EOF) {
       this.parseWomaSymbol();
     }
@@ -99,6 +99,11 @@ class Parser {
               throw new Error(this.genErrorMessage('Expected definition name'));
             }
             const token = this.currentSymbol.token;
+            if (this.dictionary.has(token)) {
+              throw new Error(this.genErrorMessage('Word is already defined'));
+            }
+            this.tsSnapshots.push([...this.ts]);
+            this.tsSnapshots.push([...this.ts]);
             this.currentSymbol = this.lexer.nextSymbol();
             if (this.currentSymbol.op !== Op.TypeStart) {
               throw new Error(this.genErrorMessage('Expected type start "("'));
@@ -120,12 +125,14 @@ class Parser {
             if (this.currentSymbol.op !== Op.TypeMid) {
               throw new Error(this.genErrorMessage('Expected "--"'));
             }
+            const expectedRturnStack = this.tsSnapshots[this.tsSnapshots.length - 1];
             this.currentSymbol = this.lexer.nextSymbol();
             while (this.currentSymbol.op === Op.Type) {
               const dataType = this.currentSymbol.dataType;
               if (dataType === undefined) {
                 throw new Error(this.genErrorMessage('Type is missing metadata'));
               }
+              expectedRturnStack.push(dataType);
               wordType.output.push(dataType);
               this.currentSymbol = this.lexer.nextSymbol();
             }
@@ -169,7 +176,7 @@ class Parser {
               pc: this.pc,
             });
             this.ast.push(this.currentSymbol);
-            this.tsSizeSnapshot.push(this.ts.length);
+            this.tsSnapshots.push([...this.ts]);
             break;
           }
           case Op.If: {
@@ -177,7 +184,26 @@ class Parser {
               rws: this.currentSymbol,
               pc: this.pc,
             });
-            this.tsSizeSnapshot.push(this.ts.length);
+            this.ast.push(this.currentSymbol);
+            this.tsSnapshots.push([...this.ts]);
+            break;
+          }
+          case Op.Else: {
+            const rtn = this.rs.pop();
+            if (rtn === undefined) {
+              throw new Error(this.genErrorMessage('Else must be used within if block'));
+            }
+            rtn.rws.value = this.pc;
+            this.rs.push({
+              pc: this.pc,
+              rws: this.currentSymbol,
+            });
+            const tsElse = this.tsSnapshots.pop();
+            if (tsElse === undefined) {
+              throw new Error(this.genErrorMessage('Stack snapshot missing'));
+            }
+            this.tsSnapshots.push([...this.ts]);
+            this.ts = tsElse;
             this.ast.push(this.currentSymbol);
             break;
           }
@@ -186,55 +212,44 @@ class Parser {
             if (rtn === undefined) {
               throw new Error(this.genErrorMessage('Nothing to end'));
             }
+            const snapshot = this.tsSnapshots.pop();
+            if (snapshot === undefined) {
+              throw new Error(this.genErrorMessage('cant find stack snapshot'));
+            }
             if (rtn.rws.op === Op.Def) {
               if (!this.currentDefinitionToken) {
                 throw new Error(this.genErrorMessage('Missing definition scope'));
               }
-              const typeToCheck = this.dictionary.get(this.currentDefinitionToken);
-              if (typeToCheck === undefined) {
-                throw new Error(this.genErrorMessage('could net find token in dictionary'));
-              }
-              if (this.ts.length < typeToCheck.type.output.length) {
+              if (this.ts.join() !== snapshot.join()) {
                 throw new Error(this.genErrorMessage(
-                  `returning stack does not match type\n` +
+                  `returning stack does not match return type\n` +
                   `Got: [ ${this.ts.map((x) => DataType[x]).join(', ')} ]\n` +
-                  `Expected: [ ${typeToCheck.type.output.map((x) => DataType[x]).join(', ')} ]`
+                  `Expected: [ ${snapshot.map((x) => DataType[x]).join(', ')} ]`
                 ));
               }
-              for (let i = 0; i < typeToCheck.type.output.length; i++) {
-                const a = typeToCheck.type.output[i];
-                const b = this.ts[(this.ts.length - typeToCheck.type.output.length) + i];
-                if (a !== b) {
-                  throw new Error(this.genErrorMessage(
-                    `returning stack does not match type\n` +
-                    `Got: [ ${this.ts.map((x) => DataType[x]).join(', ')} ]\n` +
-                    `Expected: [ ${typeToCheck.type.output.map((x) => DataType[x]).join(', ')} ]`
-                  ));
-                }
+              const backupstack = this.tsSnapshots.pop();
+              if (backupstack === undefined) {
+                throw new Error(`Missing backup stack!`);
               }
-              this.ts.length -= typeToCheck.type.output.length;
-              
+              this.ts = backupstack;
               this.currentSymbol = new WomaSymbol('exit', this.currentSymbol.ln, this.currentSymbol.col, false);
               this.currentDefinitionToken = undefined;
               this.ast.push(this.currentSymbol);
               break;
             }
-            if (rtn.rws.op !== Op.If) {
+            if (rtn.rws.op !== Op.If && rtn.rws.op !== Op.Else) {
               this.currentSymbol.value = rtn.pc;
             }
             rtn.rws.value = this.pc;
             this.ast.push(this.currentSymbol);
-
-            const stackTypeSizeTest = this.tsSizeSnapshot.pop();
-            if (stackTypeSizeTest === undefined) {
-              throw new Error(this.genErrorMessage('Unexpected, missing typestack size snapshot'));
+            if (rtn.rws.op === Op.Else) {
+              if (this.ts.join('') !== snapshot.join(''))  {
+                throw new Error(this.genErrorMessage('If and else must both end with same elements in stack'));
+              }
+              break;
             }
-            if (stackTypeSizeTest !== this.ts.length) {
-              throw new Error(this.genErrorMessage(
-                `Stack size must be the same size as starting stack size on exit of loop or condition:\n`+
-                `Starting Size: ${stackTypeSizeTest}\n` +
-                `Ending Size: ${this.ts.length}`
-              ));
+            if (this.ts.join('') !== snapshot.join(''))  {
+              throw new Error(this.genErrorMessage('If must end with same stack size and types that it started with'));
             }
             break;
           }
@@ -252,14 +267,18 @@ class Parser {
               throw new Error(this.genErrorMessage('The word "leave" must be used within a loop'));
             }
 
-            const stackSizeSnapshot = this.tsSizeSnapshot.pop();
-            if (stackSizeSnapshot !== this.ts.length) {
-              throw new Error(this.genErrorMessage(
-                `Stack size must be the same size as starting stack size on exit of loop or condition:\n`+
-                `Starting Size: ${stackSizeSnapshot}\n` +
-                `Ending Size: ${this.ts.length}`));
+            const snapshot = this.tsSnapshots.pop();
+            if (snapshot === undefined) {
+              throw new Error(this.genErrorMessage('Missing stack snapshot!'));
             }
-            this.tsSizeSnapshot.push(stackSizeSnapshot);
+            if (snapshot.join() !== this.ts.join()) {
+              throw new Error(this.genErrorMessage(
+                `returning stack does not match return type\n` +
+                `Got: [ ${this.ts.map((x) => DataType[x]).join(', ')} ]\n` +
+                `Expected: [ ${snapshot.map((x) => DataType[x]).join(', ')} ]`
+              ));
+            }
+            this.tsSnapshots.push(snapshot);
 
             this.currentSymbol.value = x.pc;
             this.ast.push(this.currentSymbol);

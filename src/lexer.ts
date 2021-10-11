@@ -3,6 +3,7 @@ type Char = string;
 type Token = string;
 
 const literals = '1,2,3,4,5,6,7,8,9,0'.split(',');
+const literalStarts = '-'.split(',');
 
 class Lexer { 
   private readonly code: string;
@@ -59,6 +60,16 @@ class Lexer {
     this.currentTokenCol = this.col;
     this.currentTokenLn = this.ln;
     this.currentTokenIsLiteral = true;
+    if (literalStarts.includes(char)) {
+      token += char;
+      char = this.next();
+      if (char === ' ') {
+        this.currentTokenIsLiteral = false;
+      }
+      if (char === '\n') {
+        this.nextLn();
+      }
+    }
     while (!['EOF', '\n', ' '].includes(char)) {
       if (this.currentTokenIsLiteral && !literals.includes(char)) {
         this.currentTokenIsLiteral = false;
