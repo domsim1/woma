@@ -88,6 +88,13 @@ class Compiler {
             this.asm(`push rbx`);
             break;
           }
+          case Op.Swap: {
+            this.asm(`pop rax`);
+            this.asm(`pop rbx`);
+            this.asm(`push rax`);
+            this.asm(`push rbx`);
+            break;
+          }
           case Op.Store: {
             this.asm(`pop rax`);
             this.asm(`pop rbx`);

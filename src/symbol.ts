@@ -25,6 +25,7 @@ enum Op {
   TypeMid,
   Exit,
   Type,
+  Swap,
 }
 
 enum OpType {
@@ -316,6 +317,49 @@ class WomaSymbol {
       case ')': {
         this.op = Op.TypeEnd;
         this.opType = OpType.Type;
+        break;
+      }
+      case 'swap': {
+        this.op = Op.Swap;
+        this.opType = OpType.Word;
+        this.wordType = [
+          {
+            input: [ DataType.int, DataType.int ],
+            output: [ DataType.int, DataType.int ],
+          },
+          {
+            input: [ DataType.ptr, DataType.ptr ],
+            output: [ DataType.ptr, DataType.ptr ],
+          }, 
+          {
+            input: [ DataType.bool, DataType.bool ],
+            output: [ DataType.bool, DataType.bool ],
+          },
+          {
+            input: [ DataType.int, DataType.ptr ],
+            output: [ DataType.ptr, DataType.int ],
+          },
+          {
+            input: [ DataType.ptr, DataType.int ],
+            output: [ DataType.int, DataType.ptr ],
+          },
+          {
+            input: [ DataType.int, DataType.bool ],
+            output: [ DataType.bool, DataType.int ],
+          },
+          {
+            input: [ DataType.bool, DataType.int ],
+            output: [ DataType.int, DataType.bool ],
+          },
+          {
+            input: [ DataType.ptr, DataType.bool ],
+            output: [ DataType.bool, DataType.ptr ],
+          },
+          {
+            input: [ DataType.bool, DataType.ptr ],
+            output: [ DataType.ptr, DataType.bool ],
+          }
+        ]
         break;
       }
       case 'exit': {

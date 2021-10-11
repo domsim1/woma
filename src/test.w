@@ -25,5 +25,7 @@ def nl ( -- )
   write
 end
 
-10 sayu nl
+10 20 swap
+sayu nl
+sayu nl
 
