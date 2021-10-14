@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import { Compiler } from './compiler';
 import { Lexer } from './lexer';
 import {Parser} from './parser';
-import { nasmCompileAndLinkMacOSX } from './tools';
+import { nasmCompileAndLinkLinux } from './tools';
 
 (async () => {
   const code = await fs.readFile('./src/test.w', 'utf-8');
@@ -10,7 +10,7 @@ import { nasmCompileAndLinkMacOSX } from './tools';
   const parser = new Parser(lexer);
   const compiler = new Compiler(parser.getAST());
   await compiler.writeStreamEnd();
-  await nasmCompileAndLinkMacOSX('test.S');
+  await nasmCompileAndLinkLinux('test.S');
   console.log('Job Done!');
 })()
 .catch((err) => {

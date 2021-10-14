@@ -261,9 +261,9 @@ class Compiler {
     this.asm(`mov %1, qword [rbp]`);
     this.asm(`sub rbp, 8`);
     this.asma(`%endmacro`);
-    this.asm(`global _main`);
+    this.asm(`global _start`);
     this.asm(`section .text`);
-    this.asma(`_main:`);
+    this.asma(`_start:`);
     this.asm(`mov rbp, return_stack_base - 8`)
   }
 
@@ -271,7 +271,7 @@ class Compiler {
     if (this.isDefiningWord) {
       throw new Error(this.genErrorMessage('Expected ending of def.'));
     }
-    this.asm(`mov rax, 0x02000001`);
+    this.asm(`mov rax, 60`);
     this.asm(`mov rdi, 0`);
     this.asm(`syscall`);
     this.writeStream.write(this.userWords);

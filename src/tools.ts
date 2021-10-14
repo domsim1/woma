@@ -15,6 +15,23 @@ function nasmCompileAndLinkMacOSX (asmFilePath: string): Promise<void> {
   });
 }
 
+function nasmCompileAndLinkLinux (asmFilePath: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    exec(`nasm -f elf64 ${asmFilePath} && ld -o ${asmFilePath.replace('.S', '')} ${asmFilePath.replace('.S', '.o')}`, (error, stdout, stderr) => {
+      if (error) {
+        reject(error);
+      }
+      if (stderr) {
+        reject(stderr);
+      }
+      console.log(stdout);
+      resolve();
+    });
+  });
+}
+
+
 export {
-  nasmCompileAndLinkMacOSX
+  nasmCompileAndLinkMacOSX,
+  nasmCompileAndLinkLinux
 }
