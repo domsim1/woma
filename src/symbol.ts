@@ -29,6 +29,7 @@ enum Op {
   Type,
   Swap,
   Neg,
+  Rot,
 }
 
 enum OpType {
@@ -45,11 +46,17 @@ enum DataType {
   word,
   any,
   ptr,
+  generic,
 }
 
 interface WordType {
   input: DataType[];
   output: DataType[];
+}
+
+interface GenericType {
+  input: string[],
+  output: string[],
 }
 
 class WomaSymbol {
@@ -61,6 +68,7 @@ class WomaSymbol {
   public readonly dataType?: DataType;
   public value?: string | number;
   public wordType?: WordType[];
+  public generic?: GenericType;
 
   constructor(token: Token, ln: number, col: number, isLiteral: boolean) {
     this.col = col;
@@ -116,13 +124,9 @@ class WomaSymbol {
         this.dataType = DataType.word;
         this.wordType = [
           {
-          input: [DataType.int],
+          input: [DataType.any],
           output: [],
-          },
-          {
-            input: [DataType.ptr],
-            output: []
-          },
+          }
         ];
         break;
       }
@@ -359,27 +363,34 @@ class WomaSymbol {
         this.opType = OpType.Word;
         this.wordType = [
           {
-            input: [ DataType.int, DataType.int ],
-            output: [ DataType.int, DataType.int ],
-          },
-          {
-            input: [ DataType.ptr, DataType.ptr ],
-            output: [ DataType.ptr, DataType.ptr ],
-          },
-          {
-            input: [ DataType.int, DataType.ptr ],
-            output: [ DataType.ptr, DataType.int ],
-          },
-          {
-            input: [ DataType.ptr, DataType.int ],
-            output: [ DataType.int, DataType.ptr ],
-          },
-        ]
+            input: [DataType.generic, DataType.generic],
+            output: [DataType.generic, DataType.generic],
+          }
+        ];
+        this.generic = {
+          input: ["x1", "x2"],
+          output: ["x2", "x1"],
+        }
         break;
       }
       case 'exit': {
         this.op = Op.Exit;
         this.opType = OpType.Flow;
+        break;
+      }
+      case 'rot': {
+        this.op = Op.Rot;
+        this.opType = OpType.Word;
+        this.wordType = [
+          {
+            input: [ DataType.generic, DataType.generic, DataType.generic ],
+            output: [ DataType.generic, DataType.generic, DataType.generic ],
+          },
+        ];
+        this.generic = {
+          input: ["x1", "x2", "x3"],
+          output: ["x2", "x3", "x1"]
+        }
         break;
       }
       default: {

@@ -95,6 +95,15 @@ class Compiler {
             this.asm(`push rbx`);
             break;
           }
+          case Op.Rot: {
+            this.asm(`pop rax`);
+            this.asm(`pop rbx`);
+            this.asm(`pop rcx`);
+            this.asm(`push rbx`);
+            this.asm(`push rax`);
+            this.asm(`push rcx`)
+            break;
+          }
           case Op.Grt: {
             this.asm(`pop rbx`);
             this.asm(`pop rcx`);

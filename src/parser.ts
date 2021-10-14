@@ -46,9 +46,8 @@ class Parser {
   }
 
   private parseWomaSymbol(): void {
-    // console.log('stack: ', this.ts.map((x) => DataType[x]));
-    // console.log('snapshot size', this.tsSizeSnapshot);
-    // console.log('symbol: ', this.currentSymbol.token);
+    console.log('stack: ', this.ts.map((x) => DataType[x]));
+    console.log('symbol: ', this.currentSymbol.token);
     switch (this.currentSymbol.opType) {
       case OpType.Lit: {
         if (this.currentSymbol.dataType === undefined) {
@@ -295,6 +294,21 @@ class Parser {
     const currentWordType = this.currentSymbol.wordType;
     if (!currentWordType) {
       throw new Error(this.genErrorMessage('Does not have a word type.'));
+    }
+    const generics = this.currentSymbol.generic;
+    if (generics !== undefined) {
+      const genericDictionary: {[key: string]: DataType} = {};
+      for (const gkey of [...generics.input].reverse()) {
+        const dataType = this.ts.pop();
+        if (dataType === undefined) {
+          throw new Error(this.genErrorMessage('Stack underflow!'));
+        }
+        genericDictionary[gkey] = dataType;
+      }
+      for (const gkey of generics.output) {
+        this.ts.push(genericDictionary[gkey]);
+      }
+      return;
     }
     let typeToCheckLength = 0;
     let matchFound = false;

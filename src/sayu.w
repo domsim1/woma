@@ -17,7 +17,6 @@ def sayu ( int -- )
   drop
 end
 
-
 def nl ( -- )
   10 mem !
   1
@@ -25,3 +24,5 @@ def nl ( -- )
   1
   write
 end
+
+9223372036854775808 sayu nl
