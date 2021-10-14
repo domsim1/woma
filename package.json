@@ -4,14 +4,13 @@
   "description": "",
   "main": "src/main.ts",
   "scripts": {
-    "start": "ts-node ./src/main.ts",
-    "repl": "ts-node ./src/repl.ts"
+    "start": "ts-node ./src/main.ts"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^16.10.2",
-    "@tyhpescript-eslint/eslint-plugin": "^4.33.0",
+    "@typescript-eslint/eslint-plugin": "^4.33.0",
     "@typescript-eslint/parser": "^4.33.0",
     "eslint": "^7.32.0",
     "ts-node": "^10.2.1",
