@@ -204,6 +204,7 @@ class Compiler {
             break;
           }
           case Op.Else: {
+            this.asm(`jmp tag_${this.currentSymbol.value}`);
             this.asma(`tag_${this.pc}:`);
             break;
           }

@@ -1,7 +1,4 @@
-def write ( int ptr int -- )
-  1
-  syscall3
-end
+def write ( int ptr int -- ) 1 syscall3 end
 
 def sayu ( int -- )
   loop 20 0 for
@@ -17,6 +14,31 @@ def sayu ( int -- )
   drop
 end
 
+def sayd ( int -- )
+  dup 0 < if
+    neg
+    -1 swap
+  else
+    0 swap
+  end
+  loop 20 0 for
+    dup 1 < if
+      swap dup if
+        45 20 i - mem + !
+      end
+      swap
+      i 1 +
+      mem 20 i - +
+      1
+      write
+      leave
+    end
+    10 /mod 48 + 20 i - mem + !
+  end
+  drop
+  drop
+end
+
 def nl ( -- )
   10 mem !
   1
@@ -25,4 +47,4 @@ def nl ( -- )
   write
 end
 
-9223372036854775808 sayu nl
+-88 sayd nl
