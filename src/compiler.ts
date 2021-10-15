@@ -188,6 +188,16 @@ class Compiler {
             this.asma(`def_${cs.value}:`)
             break;
           }
+          case Op.Eq: {
+            this.asm(`pop rbx`);
+            this.asm(`pop rcx`);
+            this.asm(`xor rax, rax`)
+            this.asm(`cmp rcx, rbx`);
+            this.asm(`sete al`);
+            this.asm(`neg rax`);
+            this.asm(`push rax`);
+            break;
+          }
         }
         break;
       }

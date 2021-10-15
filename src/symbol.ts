@@ -30,6 +30,7 @@ enum Op {
   Swap,
   Neg,
   Rot,
+  Eq,
 }
 
 enum OpType {
@@ -383,6 +384,17 @@ class WomaSymbol {
       case 'exit': {
         this.op = Op.Exit;
         this.opType = OpType.Flow;
+        break;
+      }
+      case '=': {
+        this.op = Op.Eq;
+        this.opType = OpType.Word;
+        this.wordType = [
+          {
+            input: [DataType.int, DataType.int],
+            output: [DataType.int],
+          }
+        ];
         break;
       }
       case 'rot': {
