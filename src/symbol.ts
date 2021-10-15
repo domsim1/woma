@@ -397,6 +397,22 @@ class WomaSymbol {
         ];
         break;
       }
+      case 'true': {
+        this.op = Op.Lit;
+        this.opType = OpType.Lit;
+        this.token = '-1';
+        this.value = '-1';
+        this.dataType = DataType.int;
+        break;
+      }
+      case 'false': {
+        this.op = Op.Lit;
+        this.opType = OpType.Lit;
+        this.token = '0';
+        this.value = '0';
+        this.dataType = DataType.int;
+        break;
+      }
       case 'rot': {
         this.op = Op.Rot;
         this.opType = OpType.Word;
@@ -405,6 +421,7 @@ class WomaSymbol {
             input: [ DataType.generic, DataType.generic, DataType.generic ],
             output: [ DataType.generic, DataType.generic, DataType.generic ],
           },
+          
         ];
         this.generic = {
           input: ["x1", "x2", "x3"],

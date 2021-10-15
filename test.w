@@ -59,7 +59,7 @@ def print ( int ptr -- )
   says nl
 end
 
-25 23 = if
+false if
   "Hello, World!" print
 end
 
