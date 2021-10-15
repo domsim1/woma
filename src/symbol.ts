@@ -31,6 +31,7 @@ enum Op {
   Neg,
   Rot,
   Eq,
+  NotEq,
 }
 
 enum OpType {
@@ -391,10 +392,21 @@ class WomaSymbol {
         this.opType = OpType.Word;
         this.wordType = [
           {
-            input: [DataType.int, DataType.int],
+            input: [DataType.any, DataType.any],
+            output: [DataType.int],
+          },
+        ];
+        break;
+      }
+      case '<>': {
+        this.op = Op.NotEq;
+        this.opType = OpType.Word;
+        this.wordType = [
+          {
+            input: [DataType.any, DataType.any],
             output: [DataType.int],
           }
-        ];
+        ]
         break;
       }
       case 'true': {

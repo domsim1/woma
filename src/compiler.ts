@@ -198,6 +198,16 @@ class Compiler {
             this.asm(`push rax`);
             break;
           }
+          case Op.NotEq: {
+            this.asm(`pop rbx`);
+            this.asm(`pop rcx`);
+            this.asm(`xor rax, rax`)
+            this.asm(`cmp rcx, rbx`);
+            this.asm(`setne al`);
+            this.asm(`neg rax`);
+            this.asm(`push rax`);
+            break;
+          }
         }
         break;
       }
