@@ -47,6 +47,7 @@ enum DataType {
   any,
   ptr,
   generic,
+  string,
 }
 
 interface WordType {
@@ -77,7 +78,13 @@ class WomaSymbol {
     if (isLiteral) {
       this.op = Op.Lit;
       this.opType = OpType.Lit;
-      this.value = token
+      if (token.startsWith('"')) {
+        this.token = token.replace('"', '');
+        this.value = this.token;
+        this.dataType = DataType.string;
+        return;
+      }
+      this.value = token;
       this.dataType = DataType.int;
       return;
     }

@@ -1,5 +1,5 @@
 import { createWriteStream, WriteStream } from 'fs';
-import { Op, OpType, WomaSymbol } from './symbol';
+import { DataType, Op, OpType, WomaSymbol } from './symbol';
 
 class Compiler {
   private ast: WomaSymbol[];
@@ -9,8 +9,8 @@ class Compiler {
   private userWords: string;
   private isDefiningWord: boolean;
 
-  constructor(ast: WomaSymbol[]) {
-    this.writeStream = createWriteStream('./test.S', 'utf-8');
+  constructor(ast: WomaSymbol[], file: string) {
+    this.writeStream = createWriteStream(file+'.S', 'utf-8');
     this.pc = 0;
     this.ast = ast;
     this.userWords = '';
@@ -46,12 +46,27 @@ class Compiler {
       case OpType.Lit: {
         switch (cs.op) {
           case Op.Lit: {
-            const a = cs.value
-            if (a === undefined) {
-              throw new Error(this.genErrorMessage('unable to find value for literal'));
+            if (cs.dataType === DataType.string) {
+              const a = cs.value;
+              if (a === undefined) {
+                throw new Error(this.genErrorMessage('unable to find value for literal'));
+              }
+              this.asm(`section .data`);
+              this.asm(`string_${this.pc} db '${a}'`);
+              this.asm(`.len equ $ - string_${this.pc}`);
+              this.asm(`section .text`);
+              this.asm(`mov rax, string_${this.pc}.len`);
+              this.asm(`push rax`);
+              this.asm(`mov rax, qword string_${this.pc}`);
+              this.asm(`push rax`);
+            } else {
+              const a = cs.value
+              if (a === undefined) {
+                throw new Error(this.genErrorMessage('unable to find value for literal'));
+              }
+              this.asm(`mov rax, ${a}`)
+              this.asm(`push rax`);
             }
-            this.asm(`mov rax, ${a}`)
-            this.asm(`push rax`);
             break;
           }
         }

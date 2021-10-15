@@ -3,7 +3,7 @@ type Char = string;
 type Token = string;
 
 const literals = '1,2,3,4,5,6,7,8,9,0'.split(',');
-const literalStarts = '-'.split(',');
+const literalStarts = '-,"'.split(',');
 
 class Lexer { 
   private readonly code: string;
@@ -30,6 +30,13 @@ class Lexer {
     this.col += 1;
     if (this.pc < this.code.length) {
       return this.code[this.pc];
+    }
+    return 'EOF';
+  }
+
+  private peek(howFar = 1): Char {
+    if (this.pc + howFar < this.code.length) {
+      return this.code[this.pc + howFar];
     }
     return 'EOF';
   }
@@ -61,6 +68,18 @@ class Lexer {
     this.currentTokenLn = this.ln;
     this.currentTokenIsLiteral = true;
     if (literalStarts.includes(char)) {
+      if (char === '"') {
+        token += char;
+        char = this.next();
+        while (!['EOF', '\n', '"'].includes(char)) {
+          token += char;
+          char = this.next();
+          if (char === '\n') {
+            this.nextLn();
+          }
+        }
+        return token;
+      }
       token += char;
       char = this.next();
       if (char === ' ') {

@@ -1,4 +1,7 @@
-def write ( int ptr int -- ) 1 syscall3 end
+def write ( int ptr int -- ) 
+  1 
+  syscall3 
+end
 
 def sayu ( int -- )
   loop 20 0 for
@@ -39,12 +42,22 @@ def sayd ( int -- )
   drop
 end
 
-def nl ( -- )
-  10 mem !
-  1
-  mem
-  1
-  write
+def sayc ( int -- )
+  mem !
+  1 mem 1 write
 end
 
--88 sayd nl
+def nl ( -- )
+  10 sayc
+end
+
+def says ( int ptr -- )
+  1 write
+end
+
+def print ( int ptr -- )
+  says nl
+end
+
+"Hello, World!" print
+

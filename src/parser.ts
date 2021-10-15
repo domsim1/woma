@@ -46,12 +46,18 @@ class Parser {
   }
 
   private parseWomaSymbol(): void {
-    console.log('stack: ', this.ts.map((x) => DataType[x]));
-    console.log('symbol: ', this.currentSymbol.token);
+    // console.log('stack: ', this.ts.map((x) => DataType[x]));
+    // console.log('symbol: ', this.currentSymbol.token);
     switch (this.currentSymbol.opType) {
       case OpType.Lit: {
         if (this.currentSymbol.dataType === undefined) {
           throw new Error(this.genErrorMessage('missing type'))
+        }
+        if (this.currentSymbol.dataType === DataType.string) {
+          this.ts.push(DataType.int);
+          this.ts.push(DataType.ptr);
+          this.ast.push(this.currentSymbol);
+          break;
         }
         this.ts.push(this.currentSymbol.dataType);
         this.ast.push(this.currentSymbol);
